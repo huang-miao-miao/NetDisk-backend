@@ -28,6 +28,8 @@ public class File implements Serializable {
 
     private Integer fileCategory;
 
+    private String fileMd5;
+
     private Integer status;
 
     private Date updatetime;

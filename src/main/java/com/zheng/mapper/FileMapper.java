@@ -2,6 +2,7 @@ package com.zheng.mapper;
 
 import com.zheng.pojo.File;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
 * @author Z2823
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @createDate 2024-09-26 16:52:39
 * @Entity com.zheng.pojo.File
 */
+
 public interface FileMapper extends BaseMapper<File> {
 
 }

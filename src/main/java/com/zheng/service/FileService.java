@@ -2,6 +2,7 @@ package com.zheng.service;
 
 import com.zheng.pojo.File;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.zheng.pojo.Result;
 
 /**
 * @author Z2823
@@ -10,4 +11,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
 */
 public interface FileService extends IService<File> {
 
+    Result merge(String md5, Integer chunkTotal, String fileSuffix);
 }

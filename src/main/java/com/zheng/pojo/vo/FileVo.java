@@ -16,6 +16,8 @@ public class FileVo {
 
     private Integer folderType;
 
+    private String fileMd5;
+
     private Integer fileCategory;
 
     private Date updatetime;
