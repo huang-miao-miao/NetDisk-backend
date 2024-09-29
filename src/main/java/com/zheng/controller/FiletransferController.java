@@ -7,6 +7,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.unit.DataUnit;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.IdUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.zheng.pojo.File;
 import com.zheng.pojo.Result;
@@ -69,6 +70,12 @@ public class FiletransferController {
         String originalFilename = file.getOriginalFilename();
         byte[] bytes = file.getBytes();
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
+        if(!pid.equals("1")){
+            LambdaQueryWrapper<File> fileLambdaQueryWrapper = new LambdaQueryWrapper<>();
+            fileLambdaQueryWrapper.eq(File::getFileId,pid);
+            File one = fileService.getOne(fileLambdaQueryWrapper);
+            originalFilename = one.getFilePath()+"/"+originalFilename;
+        }
         minioClient.putObject(PutObjectArgs.builder()
                 .bucket("netdisk")
                 .object(originalFilename)
@@ -77,8 +84,10 @@ public class FiletransferController {
         return Result.ok("上传成功");
     }
     @PostMapping("merge")
-    public Result merge(@RequestParam("fileMd5") String fileMd5, @RequestParam("chunkCount") Integer chunkCount, @RequestParam("filename") String filename) {
-        String extName = FileUtil.extName(filename);
-        return fileService.merge(fileMd5, chunkCount, extName);
+    public Result merge(@RequestParam("fileMd5") String fileMd5,
+                        @RequestParam("chunkCount") Integer chunkCount,
+                        @RequestParam("filename") String filename,
+                        @RequestParam("pid") String pid) {
+        return fileService.merge(fileMd5, chunkCount, filename,pid);
     }
 }

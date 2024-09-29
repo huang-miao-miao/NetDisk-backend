@@ -9,10 +9,15 @@ import com.zheng.pojo.Result;
 import com.zheng.pojo.vo.FileVo;
 import com.zheng.service.FileService;
 import io.minio.MinioClient;
+import io.minio.RemoveObjectArgs;
+import io.minio.errors.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -24,6 +29,25 @@ public class FileController {
     private MinioClient minioClient;
     @Autowired
     private FileService fileService;
+    @DeleteMapping("deletefile")
+    public Result deleteFile(@RequestParam List<String> deletefile){
+        deletefile.forEach(file -> {
+            LambdaQueryWrapper<File> fileLambdaQueryWrapper = new LambdaQueryWrapper<>();
+            fileLambdaQueryWrapper.eq(File::getFileId,file);
+            File one = fileService.getOne(fileLambdaQueryWrapper);
+            fileService.removeById(file);
+            try {
+                minioClient.removeObject(RemoveObjectArgs
+                        .builder()
+                        .bucket("netdisk")
+                        .object(one.getFilePath())
+                        .build());
+            } catch (Exception e) {
+                throw new RuntimeException(String.format("minio 删除对象失败，【%s】", e.getMessage()));
+            }
+        });
+        return Result.ok("已删除");
+    }
     @PostMapping("checkfile")
     public Result checkFile(String fileMd5,String Filename,Long FileSize,String pid){
         LambdaQueryWrapper<File> fileLambdaQueryWrapper = new LambdaQueryWrapper<>();

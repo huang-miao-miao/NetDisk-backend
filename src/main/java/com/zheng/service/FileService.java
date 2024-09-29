@@ -11,5 +11,5 @@ import com.zheng.pojo.Result;
 */
 public interface FileService extends IService<File> {
 
-    Result merge(String md5, Integer chunkTotal, String fileSuffix);
+    Result merge(String md5, Integer chunkTotal, String filename,String pid);
 }

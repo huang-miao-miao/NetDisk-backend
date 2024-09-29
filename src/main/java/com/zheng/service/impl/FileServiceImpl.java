@@ -1,5 +1,6 @@
 package com.zheng.service.impl;
 
+import cn.hutool.core.io.FileUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zheng.pojo.File;
@@ -7,11 +8,15 @@ import com.zheng.pojo.Result;
 import com.zheng.service.FileService;
 import com.zheng.mapper.FileMapper;
 import io.minio.*;
+import io.minio.errors.*;
 import io.minio.http.Method;
 import io.minio.messages.Item;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,10 +34,10 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
     private MinioClient minioClient;
 
     @Override
-    public Result merge(String md5, Integer chunkTotal, String fileSuffix) {
+    public Result merge(String md5, Integer chunkTotal, String filename, String pid) {
         // 获取所有分块
         List<Item> itemList = getChunkList(md5);
-
+        String extName = FileUtil.extName(filename);
         // 合并文件
         List<ComposeSource> composeSourceList = new ArrayList<>();
         for (Item item : itemList) {
@@ -42,11 +47,18 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
                     .build());
         }
         try {
+            if(!pid.equals("1")){
+                LambdaQueryWrapper<File> fileLambdaQueryWrapper = new LambdaQueryWrapper<>();
+                fileLambdaQueryWrapper.eq(File::getFileId,pid);
+                File one = fileMapper.selectOne(fileLambdaQueryWrapper);
+                filename = one.getFilePath()+"/"+filename;
+            }
             minioClient.composeObject(
                     ComposeObjectArgs.builder()
                             .bucket("netdisk")
-                            .object("files/" + md5 + "." +fileSuffix)
+                            .object(filename)
                             .sources(composeSourceList).build());
+            deletechunkfolder(md5);
         } catch (Exception e) {
             throw new RuntimeException(String.format("minio 合并对象失败，【%s】", e.getMessage()));
         }
@@ -79,6 +91,21 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
             return o1Index - o2Index;
         });
         return itemList;
+    }
+    public void deletechunkfolder(String md5) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        String prefix = "chunks/" + md5 + "/"; // 注意文件夹名后需要加'/'
+        Iterable<io.minio.Result<Item>> results = minioClient.listObjects(ListObjectsArgs.builder()
+                .bucket("netdisk")
+                .prefix(prefix)
+                .recursive(true) // 设置为true以包含子文件夹中的对象
+                .build());
+        for (io.minio.Result<Item> result : results) {
+            Item deleteitem = result.get();
+            minioClient.removeObject(RemoveObjectArgs.builder()
+                    .bucket("netdisk")
+                    .object(deleteitem.objectName())
+                    .build());
+        }
     }
 }
 
