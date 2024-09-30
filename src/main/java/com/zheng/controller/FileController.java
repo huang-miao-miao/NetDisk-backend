@@ -29,14 +29,38 @@ public class FileController {
     private MinioClient minioClient;
     @Autowired
     private FileService fileService;
+    @PostMapping("createfolder")
+    public Result CreateFolder(@RequestBody FileVo fileVo){
+        File file = new File();
+        Date date = new Date();
+        DateTime time = new DateTime(date);
+        String simpleUUID = IdUtil.simpleUUID();
+        file.setFileId(simpleUUID);
+        file.setFileName(fileVo.getFileName());
+        file.setStatus(0);
+        file.setPId(fileVo.getFileId());
+        file.setUserId(fileVo.getUserId());
+        file.setFolderType(0);
+        file.setUpdatetime(time);
+        if(fileVo.getFileId().equals("1")){
+            file.setFilePath(fileVo.getFileName());
+        }else {
+            File byId = fileService.getById(fileVo.getFileId());
+            file.setFilePath(byId.getFilePath()+"/"+fileVo.getFileName());
+        }
+        fileService.save(file);
+        return Result.ok("新建文件夹成功");
+    }
     @DeleteMapping("deletefile")
     public Result deleteFile(@RequestParam List<String> deletefile){
-        System.out.println(deletefile);
         deletefile.forEach(file -> {
             LambdaQueryWrapper<File> fileLambdaQueryWrapper = new LambdaQueryWrapper<>();
             fileLambdaQueryWrapper.eq(File::getFileId,file);
             File one = fileService.getOne(fileLambdaQueryWrapper);
-
+            if(one.getFolderType()==0){
+                fileService.removeById(one.getFileId());
+                return;
+            }
             try {
                 minioClient.removeObject(RemoveObjectArgs
                         .builder()
@@ -51,7 +75,7 @@ public class FileController {
         return Result.ok("已删除");
     }
     @PostMapping("checkfile")
-    public Result checkFile(String fileMd5,String Filename,Long FileSize,String pid){
+    public Result checkFile(String fileMd5,String Filename,Long FileSize,String pid,String userId){
         LambdaQueryWrapper<File> fileLambdaQueryWrapper = new LambdaQueryWrapper<>();
         fileLambdaQueryWrapper.eq(File::getFileMd5,fileMd5);
         File one = fileService.getOne(fileLambdaQueryWrapper);
@@ -61,7 +85,7 @@ public class FileController {
             DateTime time = new DateTime(date);
             File file1 = new File();
             file1.setFileId(simpleUUID);
-            file1.setUserId("1");
+            file1.setUserId(userId);
             file1.setFileName(Filename);
             file1.setFileSize(FileSize);
             file1.setFolderType(1);
