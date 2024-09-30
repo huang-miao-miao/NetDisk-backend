@@ -31,17 +31,19 @@ public class FileController {
     private FileService fileService;
     @DeleteMapping("deletefile")
     public Result deleteFile(@RequestParam List<String> deletefile){
+        System.out.println(deletefile);
         deletefile.forEach(file -> {
             LambdaQueryWrapper<File> fileLambdaQueryWrapper = new LambdaQueryWrapper<>();
             fileLambdaQueryWrapper.eq(File::getFileId,file);
             File one = fileService.getOne(fileLambdaQueryWrapper);
-            fileService.removeById(file);
+
             try {
                 minioClient.removeObject(RemoveObjectArgs
                         .builder()
                         .bucket("netdisk")
                         .object(one.getFilePath())
                         .build());
+                fileService.removeById(one.getFileId());
             } catch (Exception e) {
                 throw new RuntimeException(String.format("minio 删除对象失败，【%s】", e.getMessage()));
             }

@@ -14,6 +14,7 @@ import lombok.Data;
 @TableName(value ="file")
 @Data
 public class File implements Serializable {
+    @TableId(value = "file_id")
     private String fileId;
 
     private String userId;
