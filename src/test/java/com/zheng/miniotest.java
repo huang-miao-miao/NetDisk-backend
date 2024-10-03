@@ -1,10 +1,8 @@
 package com.zheng;
 
-import io.minio.ListObjectsArgs;
-import io.minio.MakeBucketArgs;
-import io.minio.MinioClient;
-import io.minio.Result;
+import io.minio.*;
 import io.minio.errors.*;
+import io.minio.http.Method;
 import io.minio.messages.Item;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +19,22 @@ public class miniotest {
     @Test
     public void test_create_bucket() throws Exception{
         minioClient.makeBucket(MakeBucketArgs.builder().bucket("myfile").build());
+    }
+    @Test
+    public void test_download() throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        minioClient.downloadObject(DownloadObjectArgs.builder()
+                .bucket("netdisk")
+                .build());
+    }
+    @Test
+    public void test_download_url() throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        String test1 = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs
+                .builder()
+                .bucket("netdisk")
+                .object("VID_20231003_140942.mp4")
+                .method(Method.GET)
+                .build());
+        System.out.println(test1);
     }
     @Test
     public void test_list_object(){

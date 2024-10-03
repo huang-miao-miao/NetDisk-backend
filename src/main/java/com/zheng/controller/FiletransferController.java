@@ -15,8 +15,11 @@ import com.zheng.service.FileService;
 import com.zheng.service.FiletransferService;
 import io.minio.*;
 import io.minio.errors.*;
+import io.minio.http.Method;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -70,6 +73,9 @@ public class FiletransferController {
         String originalFilename = file.getOriginalFilename();
         byte[] bytes = file.getBytes();
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
+        LambdaQueryWrapper<File> fileLambdaQueryWrapper1 = new LambdaQueryWrapper<>();
+        fileLambdaQueryWrapper1.eq(File::getFileMd5,fileMd5);
+        File one1 = fileService.getOne(fileLambdaQueryWrapper1);
         if(!pid.equals("1")){
             LambdaQueryWrapper<File> fileLambdaQueryWrapper = new LambdaQueryWrapper<>();
             fileLambdaQueryWrapper.eq(File::getFileId,pid);
@@ -81,6 +87,8 @@ public class FiletransferController {
                 .object(originalFilename)
                 .stream(byteArrayInputStream, byteArrayInputStream.available(), -1)
                 .build());
+        one1.setStatus(0);
+        fileService.updateById(one1);
         return Result.ok("上传成功");
     }
     @PostMapping("merge")
@@ -89,5 +97,19 @@ public class FiletransferController {
                         @RequestParam("filename") String filename,
                         @RequestParam("pid") String pid) {
         return fileService.merge(fileMd5, chunkCount, filename,pid);
+    }
+    @PostMapping("download")
+    public Result download_file( String fileId) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException {
+        LambdaQueryWrapper<File> fileLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        fileLambdaQueryWrapper.eq(File::getFileId,fileId);
+        File file = fileService.getOne(fileLambdaQueryWrapper);
+        String test1 = minioClient.getPresignedObjectUrl(GetPresignedObjectUrlArgs
+                .builder()
+                .bucket("netdisk")
+                .object(file.getFilePath())
+                .method(Method.GET)
+                .build());
+        System.out.println(test1);
+        return Result.ok(test1);
     }
 }

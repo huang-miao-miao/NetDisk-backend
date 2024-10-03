@@ -8,6 +8,7 @@ import com.zheng.pojo.File;
 import com.zheng.pojo.Result;
 import com.zheng.pojo.vo.FileVo;
 import com.zheng.service.FileService;
+import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
 import io.minio.RemoveObjectArgs;
 import io.minio.errors.*;
@@ -92,7 +93,7 @@ public class FileController {
             file1.setPId(pid);
             file1.setFileCategory(1);
             file1.setFileMd5(fileMd5);
-            file1.setStatus(0);
+            file1.setStatus(1);
             file1.setUpdatetime(time);
             if(pid.equals("1")){
                 file1.setFilePath(Filename);
@@ -102,7 +103,7 @@ public class FileController {
             fileService.save(file1);
             return Result.ok("文件尚未上传");
         }
-        if(one.getStatus().equals("1")){
+        if(one.getStatus()==1){
             return Result.ok("文件处理中");
         }
         return Result.ok("文件已上传");
@@ -112,7 +113,8 @@ public class FileController {
         LambdaQueryWrapper<File> QueryWrapper = new LambdaQueryWrapper<>();
         QueryWrapper.eq(File::getUserId,fileVo.getUserId())
                 .eq(File::getPId,fileVo.getFileId())
-                .eq(fileVo.getFileCategory()!=null,File::getFileCategory,fileVo.getFileCategory());
+                .eq(fileVo.getFileCategory()!=null,File::getFileCategory,fileVo.getFileCategory())
+                .eq(File::getStatus,0);
         List<File> list = fileService.list(QueryWrapper);
         List<FileVo> fileList = new ArrayList<>();
         list.forEach(file -> {

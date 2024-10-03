@@ -22,7 +22,7 @@ public class UserController {
         queryWrapper.eq(User::getPhone,userVo.getPhone());
         User user = userService.getOne(queryWrapper);
         if(user.getPassword().equals(userVo.getPassword())){
-            return Result.ok("登录通过");
+            return Result.ok(user.getUserid());
         }else {
             return Result.fail("密码错误");
         }

@@ -35,6 +35,9 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
 
     @Override
     public Result merge(String md5, Integer chunkTotal, String filename, String pid) {
+        LambdaQueryWrapper<File> fileLambdaQueryWrapper1 = new LambdaQueryWrapper<>();
+        fileLambdaQueryWrapper1.eq(File::getFileMd5,md5);
+        File file = fileMapper.selectOne(fileLambdaQueryWrapper1);
         // 获取所有分块
         List<Item> itemList = getChunkList(md5);
         String extName = FileUtil.extName(filename);
@@ -58,6 +61,8 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, File>
                             .bucket("netdisk")
                             .object(filename)
                             .sources(composeSourceList).build());
+            file.setStatus(0);
+            fileMapper.updateById(file);
             deletechunkfolder(md5);
         } catch (Exception e) {
             throw new RuntimeException(String.format("minio 合并对象失败，【%s】", e.getMessage()));
