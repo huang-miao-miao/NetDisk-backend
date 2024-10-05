@@ -1,6 +1,7 @@
 package com.zheng.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.zheng.common.TokenUtil;
 import com.zheng.pojo.Result;
 import com.zheng.pojo.User;
 import com.zheng.pojo.vo.UserVo;
@@ -22,7 +23,8 @@ public class UserController {
         queryWrapper.eq(User::getPhone,userVo.getPhone());
         User user = userService.getOne(queryWrapper);
         if(user.getPassword().equals(userVo.getPassword())){
-            return Result.ok(user.getUserid());
+            String token = TokenUtil.sign(user.getUsername(),user.getUserid());
+            return Result.ok(token);
         }else {
             return Result.fail("密码错误");
         }

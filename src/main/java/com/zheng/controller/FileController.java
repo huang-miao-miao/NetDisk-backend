@@ -4,6 +4,7 @@ import cn.hutool.core.date.DateTime;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.zheng.common.BaseContext;
 import com.zheng.pojo.File;
 import com.zheng.pojo.Result;
 import com.zheng.pojo.vo.FileVo;
@@ -77,7 +78,7 @@ public class FileController {
         return Result.ok("已删除");
     }
     @PostMapping("checkfile")
-    public Result checkFile(String fileMd5,String Filename,Long FileSize,String pid,String userId){
+    public Result checkFile(String fileMd5,String Filename,Long FileSize,String pid){
         String extName = FileUtil.extName(Filename);
         System.out.println(extName);
         LambdaQueryWrapper<File> fileLambdaQueryWrapper = new LambdaQueryWrapper<>();
@@ -89,7 +90,7 @@ public class FileController {
             DateTime time = new DateTime(date);
             File file1 = new File();
             file1.setFileId(simpleUUID);
-            file1.setUserId(userId);
+            file1.setUserId(BaseContext.getCurrentId());
             file1.setFileName(Filename);
             file1.setFileSize(FileSize);
             file1.setFolderType(1);
@@ -115,7 +116,7 @@ public class FileController {
     @PostMapping("FileList")
     public Result get_file_list(@RequestBody FileVo fileVo){
         LambdaQueryWrapper<File> QueryWrapper = new LambdaQueryWrapper<>();
-        QueryWrapper.eq(File::getUserId,fileVo.getUserId())
+        QueryWrapper.eq(File::getUserId,BaseContext.getCurrentId())
                 .eq(File::getPId,fileVo.getFileId())
                 .eq(fileVo.getFileCategory()!=null,File::getFileCategory,fileVo.getFileCategory())
                 .eq(File::getStatus,0);
